@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qui est l'Intrus ? 🕵️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #95a5a6;
+        }
+
+        .word-display {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 60px 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            font-size: 2.5em;
+            font-weight: 700;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+        }
+
+        .word-hidden {
+            background: #34495e;
+            color: #34495e;
+            user-select: none;
+        }
+
+        .player-info {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .progress {
+            background: #ecf0f1;
+            height: 8px;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .role-normal {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .role-intrus {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .game-over {
+            padding: 20px;
+        }
+
+        .game-over h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .stats p {
+            margin: 10px 0;
+            color: #333;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            .word-display {
+                font-size: 2em;
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Écran d'accueil -->
+        <div id="home-screen" class="screen active">
+            <h1>🕵️ Qui est l'Intrus ?</h1>
+            <p class="subtitle">Le jeu où un joueur a un mot différent !</p>
+            
+            <div class="instructions">
+                <strong>Règles du jeu :</strong><br>
+                • Chaque joueur voit un mot secret<br>
+                • La majorité a le MÊME mot<br>
+                • UN joueur a un mot DIFFÉRENT (l'intrus)<br>
+                • Discutez sans révéler votre mot<br>
+                • Trouvez qui est l'intrus ! 🎯
+            </div>
+
+            <label for="playerCount">Nombre de joueurs (3-10) :</label>
+            <input type="number" id="playerCount" min="3" max="10" value="3">
+            
+            <button onclick="startGame()">🎮 Commencer la partie</button>
+        </div>
+
+        <!-- Écran de révélation -->
+        <div id="reveal-screen" class="screen">
+            <div class="progress">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            
+            <div class="player-info">
+                Joueur <span id="currentPlayer"></span> / <span id="totalPlayers"></span>
+            </div>
+
+            <div id="ready-state">
+                <p style="margin: 20px 0; color: #666;">Passe le téléphone au joueur suivant</p>
+                <button onclick="showWord()">👀 Voir mon mot</button>
+            </div>
+
+            <div id="word-state" style="display: none;">
+                <div id="word-display" class="word-display"></div>
+                <div id="role-display"></div>
+                <button onclick="nextPlayer()">✅ Mot vu, joueur suivant</button>
+            </div>
+        </div>
+
+        <!-- Écran de fin -->
+        <div id="end-screen" class="screen">
+            <div class="game-over">
+                <h2>🎉 Tous les mots sont distribués !</h2>
+                <p style="margin: 20px 0; font-size: 1.1em; color: #666;">
+                    Que la partie commence ! Discutez et trouvez l'intrus...
+                </p>
+                
+                <div class="stats">
+                    <p><strong>📊 Résumé de la partie :</strong></p>
+                    <p>👥 Joueurs : <span id="finalPlayerCount"></span></p>
+                    <p>✅ Mot majoritaire : <span id="normalWord" style="font-weight: 700; color: #667eea;"></span></p>
+                    <p>❌ Mot de l'intrus : <span id="intrusWord" style="font-weight: 700; color: #f5576c;"></span></p>
+                </div>
+
+                <button onclick="resetGame()">🔄 Nouvelle partie</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base de données de paires de mots (mot normal / mot intrus)
+        const wordPairs = [
+            // Animaux
+            { normal: "🐶 Chien", intrus: "🐺 Loup" },
+            { normal: "🐱 Chat", intrus: "🐯 Tigre" },
+            { normal: "🐝 Abeille", intrus: "🐝 Guêpe" },
+            { normal: "🦋 Papillon", intrus: "🦋 Phalène" },
+            { normal: "🐘 Éléphant", intrus: "🦣 Mammouth" },
+            { normal: "🦁 Lion", intrus: "🐯 Tigre" },
+            { normal: "🐧 Pingouin", intrus: "🐧 Manchot" },
+            { normal: "🐊 Crocodile", intrus: "🐊 Alligator" },
+            { normal: "🦈 Requin", intrus: "🐋 Baleine" },
+            { normal: "🦅 Aigle", intrus: "🦅 Faucon" },
+            
+            // Fruits & Légumes
+            { normal: "🍎 Pomme", intrus: "🍐 Poire" },
+            { normal: "🍌 Banane", intrus: "🍌 Plantain" },
+            { normal: "🍓 Fraise", intrus: "🍒 Cerise" },
+            { normal: "🍊 Orange", intrus: "🍊 Mandarine" },
+            { normal: "🥕 Carotte", intrus: "🥕 Panais" },
+            { normal: "🍅 Tomate", intrus: "🌶️ Poivron" },
+            { normal: "🥒 Concombre", intrus: "🥒 Courgette" },
+            { normal: "🍇 Raisin", intrus: "🫐 Myrtille" },
+            
+            // Véhicules
+            { normal: "🚗 Voiture", intrus: "🚙 SUV" },
+            { normal: "🚲 Vélo", intrus: "🛴 Trottinette" },
+            { normal: "✈️ Avion", intrus: "🚁 Hélicoptère" },
+            { normal: "🚂 Train", intrus: "🚊 Tramway" },
+            { normal: "🚢 Bateau", intrus: "⛵ Voilier" },
+            { normal: "🏍️ Moto", intrus: "🛵 Scooter" },
+            
+            // Métiers
+            { normal: "👨‍⚕️ Médecin", intrus: "👨‍⚕️ Infirmier" },
+            { normal: "👨‍🍳 Cuisinier", intrus: "👨‍🍳 Pâtissier" },
+            { normal: "👨‍🏫 Professeur", intrus: "👨‍🏫 Instituteur" },
+            { normal: "👨‍🚒 Pompier", intrus: "👮 Policier" },
+            { normal: "👨‍✈️ Pilote", intrus: "👨‍✈️ Steward" },
+            { normal: "👨‍🎨 Peintre", intrus: "👨‍🎨 Sculpteur" },
+            
+            // Objets quotidiens
+            { normal: "📱 Téléphone", intrus: "📱 Tablette" },
+            { normal: "💻 Ordinateur", intrus: "💻 Laptop" },
+            { normal: "⌚ Montre", intrus: "⏰ Réveil" },
+            { normal: "👓 Lunettes", intrus: "🕶️ Lunettes de soleil" },
+            { normal: "🔑 Clé", intrus: "🔑 Badge" },
+            { normal: "✂️ Ciseaux", intrus: "🔪 Couteau" },
+            { normal: "📚 Livre", intrus: "📰 Journal" },
+            { normal: "✏️ Crayon", intrus: "🖊️ Stylo" },
+            
+            // Sports
+            { normal: "⚽ Football", intrus: "🏈 Rugby" },
+            { normal: "🏀 Basketball", intrus: "🏐 Volleyball" },
+            { normal: "🎾 Tennis", intrus: "🏸 Badminton" },
+            { normal: "🏊 Natation", intrus: "🤿 Plongée" },
+            { normal: "🥊 Boxe", intrus: "🥋 Karaté" },
+            { normal: "⛷️ Ski", intrus: "🏂 Snowboard" },
+            
+            // Vêtements
+            { normal: "👕 T-shirt", intrus: "👔 Chemise" },
+            { normal: "👖 Jean", intrus: "👖 Pantalon" },
+            { normal: "👟 Basket", intrus: "👞 Chaussure" },
+            { normal: "🧥 Veste", intrus: "🧥 Manteau" },
+            { normal: "🧢 Casquette", intrus: "🎩 Chapeau" },
+            { normal: "🧣 Écharpe", intrus: "🧣 Foulard" },
+            
+            // Musique
+            { normal: "🎸 Guitare", intrus: "🎸 Basse" },
+            { normal: "🎹 Piano", intrus: "🎹 Synthétiseur" },
+            { normal: "🥁 Batterie", intrus: "🥁 Percussion" },
+            { normal: "🎺 Trompette", intrus: "🎷 Saxophone" },
+            { normal: "🎻 Violon", intrus: "🎻 Violoncelle" },
+            
+            // Lieux
+            { normal: "🏖️ Plage", intrus: "🏖️ Lac" },
+            { normal: "🏔️ Montagne", intrus: "🌋 Volcan" },
+            { normal: "🏙️ Ville", intrus: "🏘️ Village" },
+            { normal: "🏛️ Musée", intrus: "🎭 Théâtre" },
+            { normal: "🏥 Hôpital", intrus: "💊 Pharmacie" },
+            { normal: "🏪 Supermarché", intrus: "🏪 Épicerie" },
+            
+            // Nourriture
+            { normal: "🍕 Pizza", intrus: "🍕 Focaccia" },
+            { normal: "🍔 Burger", intrus: "🌭 Hot-dog" },
+            { normal: "🍰 Gâteau", intrus: "🧁 Cupcake" },
+            { normal: "🍫 Chocolat", intrus: "🍬 Bonbon" },
+            { normal: "🍞 Pain", intrus: "🥖 Baguette" },
+            { normal: "🥐 Croissant", intrus: "🥐 Pain au chocolat" },
+            { normal: "🍝 Pâtes", intrus: "🍚 Riz" },
+            { normal: "☕ Café", intrus: "🍵 Thé" },
+            
+            // Nature
+            { normal: "🌲 Sapin", intrus: "🌳 Chêne" },
+            { normal: "🌹 Rose", intrus: "🌷 Tulipe" },
+            { normal: "🌞 Soleil", intrus: "🌝 Lune" },
+            { normal: "⭐ Étoile", intrus: "☄️ Comète" },
+            { normal: "🌊 Océan", intrus: "🌊 Mer" },
+            { normal: "⛰️ Montagne", intrus: "⛰️ Colline" }
+        ];
+
+        let currentPlayerIndex = 0;
+        let totalPlayers = 0;
+        let selectedPair = null;
+        let intrusPlayerIndex = 0;
+
+        function startGame() {
+            totalPlayers = parseInt(document.getElementById('playerCount').value);
+            
+            if (totalPlayers < 3 || totalPlayers > 10) {
+                alert('Le nombre de joueurs doit être entre 3 et 10 !');
+                return;
+            }
+
+            // Sélectionner une paire de mots aléatoire
+            selectedPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            
+            // Choisir aléatoirement qui sera l'intrus
+            intrusPlayerIndex = Math.floor(Math.random() * totalPlayers);
+            
+            currentPlayerIndex = 0;
+            
+            showScreen('reveal-screen');
+            updateRevealScreen();
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function updateRevealScreen() {
+            document.getElementById('currentPlayer').textContent = currentPlayerIndex + 1;
+            document.getElementById('totalPlayers').textContent = totalPlayers;
+            
+            // Mise à jour de la barre de progression
+            const progress = ((currentPlayerIndex + 1) / totalPlayers) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            
+            // Réinitialiser l'affichage
+            document.getElementById('ready-state').style.display = 'block';
+            document.getElementById('word-state').style.display = 'none';
+        }
+
+        function showWord() {
+            const wordDisplay = document.getElementById('word-display');
+            const roleDisplay = document.getElementById('role-display');
+            
+            // Afficher le mot approprié
+            if (currentPlayerIndex === intrusPlayerIndex) {
+                wordDisplay.textContent = selectedPair.intrus;
+                roleDisplay.innerHTML = '<span class="role-badge role-intrus">Tu es l\'INTRUS !</span>';
+            } else {
+                wordDisplay.textContent = selectedPair.normal;
+                roleDisplay.innerHTML = '<span class="role-badge role-normal">Tu es dans la majorité</span>';
+            }
+            
+            document.getElementById('ready-state').style.display = 'none';
+            document.getElementById('word-state').style.display = 'block';
+        }
+
+        function nextPlayer() {
+            currentPlayerIndex++;
+            
+            if (currentPlayerIndex >= totalPlayers) {
+                // Fin de la partie
+                showEndScreen();
+            } else {
+                updateRevealScreen();
+            }
+        }
+
+        function showEndScreen() {
+            document.getElementById('finalPlayerCount').textContent = totalPlayers;
+            document.getElementById('normalWord').textContent = selectedPair.normal;
+            document.getElementById('intrusWord').textContent = selectedPair.intrus;
+            showScreen('end-screen');
+        }
+
+        function resetGame() {
+            currentPlayerIndex = 0;
+            selectedPair = null;
+            intrusPlayerIndex = 0;
+            showScreen('home-screen');
+        }
+    </script>
+</body>
+</html>
